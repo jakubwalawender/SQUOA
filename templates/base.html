@@ -1,0 +1,27 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SØUOA</title>
+    <link rel="shortcut icon" type="image/png" href="{% static 'logo.ico' %}"/>
+    <link rel="stylesheet" href="{% static 'src/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'src/custom.css' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bitter&family=Black+Ops+One&display=swap" rel="stylesheet">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.2/dist/cdn.min.js"></script>
+
+</head>
+
+<body class="bg-gray-100">
+{% block base %}
+{% endblock base %}
+</body>
+
+</html>

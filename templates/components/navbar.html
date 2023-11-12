@@ -1,0 +1,37 @@
+{% load static %}
+<header class="lg:px-16 px-4 bg-white flex flex-wrap items-center py-4 shadow-md" x-data="{navbarOpen:false}">
+    <div class="flex-1 flex justify-between items-center">
+        <a href="{% url 'default' %}"
+           class="flex items-center space-x-1 rtl:space-x-reverse">
+            <img class="w-7 sm:w-12" src="{% static 'logo.svg' %}"/>
+            <span class="tracking-widest text-gray-700 logo-text self-center text-md sm:text-3xl font-semibold whitespace-nowrap">SØUOA</span>
+        </a>
+    </div>
+
+    <button for="menu-toggle" class="pointer-cursor md:hidden block" @click="navbarOpen = !navbarOpen">
+        <svg class="fill-current text-gray-900"
+             xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
+            <title>menu</title>
+            <path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z"></path>
+        </svg>
+    </button>
+    <input class="hidden" type="checkbox" id="menu-toggle"/>
+
+    <div class="md:flex md:items-center md:w-auto w-full" id="menu" :class="{'hidden':!navbarOpen,'flex':navbarOpen}">
+        <nav>
+            <ul class="md:flex items-center justify-between text-base text-gray-700 pt-4 md:pt-0 hover:text-gray-500">
+                {% for c in courts %}
+                    {% if c == court %}
+                        <li><a class="md:p-4 py-3 px-0 block font-bold text-gray-900 hover:text-gray-700"
+                               href="{% url 'subscriptions_calendar' c.id %}">{{ c.name }}</a></li>
+                    {% else %}
+                        <li><a class="md:p-4 py-3 px-0 block text-gray-500"
+                               href="{% url 'subscriptions_calendar' c.id %}">{{ c.name }}</a></li>
+                    {% endif %}
+                {% endfor %}
+                <li><a class="md:p-4 py-3 px-0 block text-red-600 hover:text-red-500"
+                       href="{% url 'logout'%}">Logout</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>

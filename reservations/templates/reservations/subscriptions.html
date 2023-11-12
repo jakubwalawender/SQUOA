@@ -1,0 +1,106 @@
+{% extends "base_navbar.html" %}
+{% load int_to_weekday %}
+{% load int_to_weekday_short %}
+{% load get_item %}
+{% load reservation_is_empty %}
+{% load reservation_is_inactive %}
+{% load reservation_is_mine %}
+{% load reservation_other_court_exists %}
+
+{% block content %}
+    {% if calendar %}
+        <div class="px-4 my-4 sm:my-12 flex text-xs md:text-sm font-medium justify-center items-center"
+             x-data="{ buttonDisabled: false }">
+            {#        <div class="logo-text text-gray-700 text-4xl text-center mt-3">{{ court.name }}</div>#}
+            <div class="w-screen md:w-3/4 xl:w-3/4 2xl:w-1/2">
+                <div class="grid grid-cols-8 bg-gray-900">
+                    <div class="bg-gray-100 p-4 items-center justify-center"></div>
+                    {% for day in calendar.keys %}
+                        <div class="flex text-gray-200 font-medium items-center justify-center border-r border-t border-gray-100">
+                            <p class="hidden overflow-hidden display: none xl:block">{{ day|int_to_weekday }}</p>
+                            <p class="visible display: none xl:hidden">{{ day | int_to_weekday_short }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
+                {% for hour in hours %}
+                    <div x-data="{hover: false}" @mouseover.away="hover = false" x-on:mouseover="hover = true"
+                         class="grid grid-cols-8 ">
+                        <div class="flex text-gray-200 bg-gray-900 items-center justify-center border-r border-t border-gray-100"
+                             :class="{ 'bg-gray-950': hover }">
+                            <p>{{ hour }}</p>
+                        </div>
+
+                        {% for day in calendar.keys %}
+                            {% with dayplan=calendar|get_item:day %}
+                                {% with value=dayplan|get_item:hour %}
+                                    {% reservation_other_court_exists user day hour court as roce %}
+                                    {% if roce %}
+                                        <div
+                                                class="bg-amber-500 h-8 items-center justify-center border-r border-t border-gray-100"
+                                                :class="{ 'bg-amber-600': hover }">
+                                            <p></p>
+                                        </div>
+                                    {% elif value|reservation_is_empty %}
+                                        <form action="{% url 'create_reservation' court.id hour day %}" method="POST"
+                                              onsubmit="if(submitted) return false; submitted = true; return true"
+                                              class="bg-lime-500 h-8 items-center justify-center border-r border-t border-gray-100"
+                                              :class="{ 'bg-lime-600': hover }"
+                                              x-on:submit="buttonDisabled = true">
+                                            {% csrf_token %}
+                                            <button :disabled="buttonDisabled" type="submit" class="h-full w-full p-4"
+                                                    value=""></button>
+                                        </form>
+
+                                    {% elif value|reservation_is_inactive %}
+                                        <div
+                                                class="bg-slate-200 h-8 items-center justify-center border-r border-t border-gray-300"
+                                                :class="{ 'bg-slate-300': hover }">
+                                            <p></p>
+                                        </div>
+                                    {% elif value|reservation_is_mine:user %}
+                                        <form action="{% url 'remove_reservation' court.id hour day %}" method="POST"
+                                              onsubmit="if(submitted) return false; submitted = true; return true"
+                                              class="bg-cyan-500 h-8 items-center justify-center border-r border-t border-gray-100"
+                                              :class="{ 'bg-cyan-600': hover }" type="button"
+                                              x-on:submit="buttonDisabled = true">
+                                            {% csrf_token %}
+                                            <button :disabled="buttonDisabled" type="submit" class="h-full w-full p-4"
+                                                    value=""></button>
+                                        </form>
+                                    {% else %}
+                                        <div
+                                                class="bg-red-600 h-8 items-center justify-center border-r border-t border-gray-100"
+                                                :class="{ 'bg-red-700': hover }">
+                                            <p></p>
+                                        </div>
+                                    {% endif %}
+                                {% endwith %}
+                            {% endwith %}
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% else %}
+        <div class="px-4 my-4 sm:my-12 flex font-bold text-2xl text-xs md:text-sm justify-center items-center">
+            No data
+        </div>
+    {% endif %}
+
+
+
+{% endblock content %}
+
+<script>
+    Alpine.data("onHover", () => {
+        hoverIn()
+        {
+            this.hover = true;
+        }
+        hoverOut()
+        {
+            this.hover = false;
+        }
+
+    })
+</script>

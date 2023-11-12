@@ -1,0 +1,112 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres
+    networks:
+      - bot-network
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${POSTGRES_NAME}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:latest
+    restart: always
+    ports:
+      - '${REDIS_PORT}:6379'
+    volumes:
+      - ./data/redis:/data
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli ping | grep PONG" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - bot-network
+
+
+  redisinsight:
+    image: redislabs/redisinsight:latest
+    container_name: redisui
+    restart: always
+    ports:
+      - '${REDISINSIGHT_PORT}:8001'
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - bot-network
+
+
+  web:
+    build: .
+    networks:
+      - bot-network
+    command: bash -c "python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/gym_manager_bot
+    ports:
+      - "${APP_PORT}:8000"
+    env_file:
+      - .env
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+
+  celery_worker:
+    build: .
+    env_file:
+      - .env
+    networks:
+      - bot-network
+    command: bash -c "celery -A config.celery_app worker -l info"
+    volumes:
+      - .:/gym_manager_bot
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+
+  celery_beat:
+    build: .
+    env_file:
+      - .env
+    networks:
+      - bot-network
+    command: bash -c "celery -A config beat -l debug"
+    volumes:
+      - .:/gym_manager_bot
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+
+  nginx:
+    container_name: nginx_bot
+    restart: always
+    build: ./nginx
+    networks:
+      - bot-network
+    ports:
+      - "${NGINX_PORT}:80"
+    depends_on:
+      - web
+
+networks:
+  bot-network:
